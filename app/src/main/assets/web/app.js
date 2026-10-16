@@ -587,6 +587,11 @@
         <div class="set-row" data-action="toggle-auto"><div class="meta"><div class="t1">Otomatik güncelle</div><div class="t2">Günde en fazla bir kez, uygulama açılırken</div></div><span class="switch ${s.autoUpdate ? 'on' : ''}"></span></div>
       </div>
       <div class="set-group">
+        <div class="set-label">YouTube hesabı</div>
+        <div class="set-row"><div class="meta"><div class="t1">${s.cookies ? 'Bağlı' : 'Bağlı değil'}</div><div class="t2">Yalnızca "bot değilim doğrulaması" hatası alırsan gerekir. Mümkünse yan hesap kullan.</div></div>
+          ${s.cookies ? '<button class="small-btn" data-action="yt-logout">Çıkış</button>' : '<button class="small-btn" data-action="yt-login">Giriş yap</button>'}</div>
+      </div>
+      <div class="set-group">
         <div class="set-label">Depolama</div>
         <div class="set-row"><div class="meta"><div class="t1">Telefon › Müzik › EFK Music</div><div class="t2">MP3'ler burada durur; uygulamayı silsen bile kaybolmaz, başka müzik uygulamalarında da görünür.</div></div>
           <button class="small-btn" data-action="rescan">Tara</button></div>
@@ -696,6 +701,8 @@
     'update-engine': () => { call('updateEngine'); toast('Motor güncellemesi kontrol ediliyor…'); },
     'set-quality': (el) => { call('setSetting', 'quality', el.dataset.v); state.settings.quality = el.dataset.v; settingsSheet(); },
     'toggle-auto': () => { state.settings.autoUpdate = !state.settings.autoUpdate; call('setSetting', 'autoUpdate', String(state.settings.autoUpdate)); settingsSheet(); },
+    'yt-login': () => { closeSheet(); call('loginYouTube'); },
+    'yt-logout': () => { call('logoutYouTube'); state.settings.cookies = false; settingsSheet(); },
     'rescan': () => { call('rescan'); toast('Müzik klasörü taranıyor…'); },
     'check-update': () => { call('checkAppUpdate', true); toast('Kontrol ediliyor…'); },
     'open-url': (el) => call('openUrl', el.dataset.url),
@@ -746,6 +753,7 @@
           break;
         case 'settings':
           state.settings = data || state.settings;
+          if (state.sheet === 'settings') settingsSheet();
           break;
         case 'player': {
           state.player = Object.assign(state.player, data || {});

@@ -70,8 +70,15 @@ object Engine {
         return true
     }
 
-    /** YouTube oynatıcı betiklerini önbelleğe alarak sonraki indirmeleri hızlandırır. */
-    fun cacheDir(): String = File(app.cacheDir, "yt-dlp-cache").absolutePath
+    /**
+     * Her yt-dlp çağrısına eklenen ortak ayarlar: oynatıcı betiklerini
+     * önbelleğe alır (hızlandırır) ve varsa YouTube hesabı çerezlerini kullanır.
+     */
+    fun applyCommon(request: YoutubeDLRequest): YoutubeDLRequest {
+        request.addOption("--cache-dir", File(app.cacheDir, "yt-dlp-cache").absolutePath)
+        Settings.cookieFile?.let { request.addOption("--cookies", it.absolutePath) }
+        return request
+    }
 
     fun stateJson(): JSONObject = JSONObject()
         .put("ready", ready)
@@ -128,8 +135,7 @@ object Engine {
     /** YouTube'da arama yapar; sonuçlar hafif (düz) liste olarak gelir. */
     suspend fun search(query: String, limit: Int = 25): JSONArray = withContext(Dispatchers.IO) {
         if (!awaitIdle()) throw IllegalStateException(initError ?: "İndirme motoru hazır değil")
-        val request = YoutubeDLRequest("ytsearch$limit:$query")
-            .addOption("--cache-dir", cacheDir())
+        val request = applyCommon(YoutubeDLRequest("ytsearch$limit:$query"))
             .addOption("--flat-playlist")
             .addOption("-J")
             .addOption("--no-warnings")
@@ -140,8 +146,7 @@ object Engine {
     /** Oynatma listesi / albüm bağlantısındaki şarkıları çıkarır. */
     suspend fun resolvePlaylist(url: String): Pair<String, JSONArray> = withContext(Dispatchers.IO) {
         if (!awaitIdle()) throw IllegalStateException(initError ?: "İndirme motoru hazır değil")
-        val request = YoutubeDLRequest(url)
-            .addOption("--cache-dir", cacheDir())
+        val request = applyCommon(YoutubeDLRequest(url))
             .addOption("--flat-playlist")
             .addOption("--yes-playlist")
             .addOption("-J")
@@ -214,7 +219,6 @@ object Meta {
     fun cleanArtist(artist: String): String = artist
         .removeSuffix(" - Topic")
         .replace(Regex("VEVO$"), "")
-        .replace(Regex("\\s*,.*$"), "")
         .trim()
 
     /** "Sanatçı - Şarkı" biçimindeki başlığı ayırır; sanatçı yoksa kullanılır. */
@@ -235,7 +239,7 @@ object Errors {
         val l = line.lowercase()
         return when {
             "sign in to confirm" in l || "not a bot" in l ->
-                "YouTube bot doğrulaması istedi. Biraz bekleyip tekrar deneyin veya Ayarlar'dan motoru güncelleyin."
+                "YouTube \"bot değilim\" doğrulaması istedi. Ayarlar → YouTube hesabı ile giriş yapıp tekrar dene."
             "private video" in l -> "Bu video gizli."
             "video unavailable" in l || "not available" in l -> "Video kullanılamıyor (kaldırılmış veya bölgede engelli)."
             "confirm your age" in l || "age-restricted" in l || "inappropriate" in l ->

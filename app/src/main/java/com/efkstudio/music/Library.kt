@@ -208,7 +208,6 @@ object Library {
             put(MediaStore.MediaColumns.MIME_TYPE, "audio/mpeg")
             put(MediaStore.MediaColumns.RELATIVE_PATH, RELATIVE_DIR)
             put(MediaStore.MediaColumns.IS_PENDING, 1)
-            put(MediaStore.Audio.AudioColumns.IS_MUSIC, 1)
         }
         val uri = resolver.insert(collection, values) ?: throw IOException("Müzik klasörüne yazılamadı")
         try {

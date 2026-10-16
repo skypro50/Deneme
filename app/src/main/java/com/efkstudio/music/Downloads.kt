@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
@@ -231,6 +232,7 @@ object DownloadQueue {
         } catch (e: YoutubeDL.CanceledException) {
             job.status = "canceled"
         } catch (e: Throwable) {
+            Log.w("EFK", "İndirme başarısız: ${job.url}\n${e.message}")
             if (job.cancelRequested) job.status = "canceled"
             else fail(job, Errors.friendly(e.message), emitNow = false)
         } finally {
@@ -241,11 +243,10 @@ object DownloadQueue {
 
     private fun runYtDlp(service: DownloadService, job: DlJob, work: File, full: Boolean) {
         val metaFile = File(work, "meta.json")
-        val request = YoutubeDLRequest(job.url)
+        val request = Engine.applyCommon(YoutubeDLRequest(job.url))
             .addOption("--no-playlist")
             .addOption("--newline")
             .addOption("--no-mtime")
-            .addOption("--cache-dir", Engine.cacheDir())
             .addOption("-f", "bestaudio/best")
             .addOption("-x")
             .addOption("--audio-format", "mp3")

@@ -103,6 +103,18 @@ class WebBridge(private val activity: MainActivity) {
     fun updateEngine() = Engine.update(manual = true)
 
     @JavascriptInterface
+    fun loginYouTube() = ui {
+        activity.startActivity(android.content.Intent(activity, LoginActivity::class.java))
+    }
+
+    @JavascriptInterface
+    fun logoutYouTube() = ui {
+        LoginActivity.logout(activity)
+        Events.emit("settings", Settings.toJson())
+        Events.toast("YouTube hesabı bağlantısı kaldırıldı")
+    }
+
+    @JavascriptInterface
     fun readClipboard(): String {
         var text = ""
         val latch = java.util.concurrent.CountDownLatch(1)

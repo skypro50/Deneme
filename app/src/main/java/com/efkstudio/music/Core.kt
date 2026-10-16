@@ -32,10 +32,15 @@ object Events {
 
 object Settings {
     private lateinit var prefs: SharedPreferences
+    private lateinit var app: Context
 
     fun init(context: Context) {
+        app = context.applicationContext
         prefs = context.getSharedPreferences("efk_settings", Context.MODE_PRIVATE)
     }
+
+    /** Kullanıcı YouTube hesabıyla giriş yaptıysa yt-dlp'nin kullanacağı çerez dosyası. */
+    val cookieFile: java.io.File? get() = LoginActivity.cookieFile(app).takeIf { it.exists() }
 
     /** MP3 bit hızı (kbps): "128", "192" veya "320". */
     var quality: String
@@ -61,6 +66,7 @@ object Settings {
     fun toJson(): JSONObject = JSONObject()
         .put("quality", quality)
         .put("autoUpdate", autoUpdate)
+        .put("cookies", cookieFile != null)
 
     fun set(key: String, value: String) {
         when (key) {
