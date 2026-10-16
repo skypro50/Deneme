@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">EFK Music</string>
+    <string name="share_label">EFK Music ile MP3 indir</string>
+    <string name="channel_downloads">İndirmeler</string>
+    <string name="channel_updates">Güncellemeler</string>
+</resources>

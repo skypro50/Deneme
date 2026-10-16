@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- EFK Studio mavi paleti (web arayüzündeki :root değişkenleriyle aynı) -->
+    <color name="efk_bg">#FF050A16</color>
+    <color name="efk_blue">#FF2D7CFF</color>
+    <color name="efk_blue_deep">#FF1446D8</color>
+    <color name="efk_cyan">#FF00D4FF</color>
+    <color name="ic_launcher_background">#FF0A1A3F</color>
+</resources>
