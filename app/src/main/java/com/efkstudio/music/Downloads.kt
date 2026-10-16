@@ -164,7 +164,11 @@ object DownloadQueue {
                 val job = synchronized(this@DownloadQueue) {
                     jobs.firstOrNull { it.status == "queued" }.also { if (it == null) running = false }
                 } ?: break
-                process(service, job)
+                try {
+                    process(service, job)
+                } catch (t: Throwable) {
+                    fail(job, Errors.friendly(t.message))
+                }
             }
             service.onQueueIdle()
         }
@@ -261,6 +265,7 @@ object DownloadQueue {
 
         var metaApplied = false
         val callback: (Float, Long, String) -> Unit = { progress, eta, line ->
+            if (job.cancelRequested) YoutubeDL.getInstance().destroyProcessById(job.id)
             if (!metaApplied && metaFile.exists()) {
                 metaApplied = applyMeta(job, readMeta(metaFile))
             }

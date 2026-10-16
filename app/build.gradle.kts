@@ -9,6 +9,9 @@ plugins {
 // GitHub Actions çalıştırma numarasından gelir.
 val buildNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
 
+// Emülatör testi için x86_64 kütüphanelerini de paketle: ./gradlew -Pefk.x86=true ...
+val withX86 = (project.findProperty("efk.x86") as String?) == "true"
+
 android {
     namespace = "com.efkstudio.music"
     compileSdk = 35
@@ -46,6 +49,7 @@ android {
             isEnable = true
             reset()
             include("arm64-v8a", "armeabi-v7a")
+            if (withX86) include("x86_64")
             isUniversalApk = true
         }
     }
@@ -56,7 +60,7 @@ android {
         jniLibs {
             useLegacyPackaging = true
             // Telefonlar ARM işlemci kullanır; x86 kütüphaneleri APK'yı boşuna büyütür.
-            excludes += setOf("lib/x86/**", "lib/x86_64/**")
+            if (!withX86) excludes += setOf("lib/x86/**", "lib/x86_64/**")
         }
     }
 

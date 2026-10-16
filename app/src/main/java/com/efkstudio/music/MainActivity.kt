@@ -51,6 +51,7 @@ class MainActivity : ComponentActivity() {
     private var pendingShare: String? = null
     private var pendingTab: String? = null
     private var pendingDeleteId: String? = null
+    private var pendingEval: String? = null
     private var insetTop = 0
     private var insetBottom = 0
 
@@ -165,6 +166,7 @@ class MainActivity : ComponentActivity() {
                 pushInsets()
                 pendingTab?.let { emitToWeb("navigate", JSONObject().put("tab", it)); pendingTab = null }
                 pendingShare?.let { startShared(it); pendingShare = null }
+                pendingEval?.let { web.evaluateJavascript(it, null); pendingEval = null }
             }
         }
         web.addJavascriptInterface(WebBridge(this), "EFKNative")
@@ -191,6 +193,13 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIntent(intent: Intent?) {
         intent ?: return
+        // Yalnızca debug derlemede: otomatik emülatör testi arayüzü JS ile sürer.
+        if (BuildConfig.DEBUG) {
+            intent.getStringExtra("efk_eval")?.let { js ->
+                if (pageReady) web.evaluateJavascript(js, null) else pendingEval = js
+                intent.removeExtra("efk_eval")
+            }
+        }
         if (intent.action == Intent.ACTION_SEND) {
             val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return
             val url = YouTube.extractUrl(text)
