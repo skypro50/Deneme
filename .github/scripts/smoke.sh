@@ -25,7 +25,9 @@ wait_job() {
 }
 
 adb install -r -g "$APK"
+adb logcat -G 16M || true
 adb logcat -c
+adb logcat -b crash -c || true
 adb shell am start -n "$PKG/.MainActivity"
 sleep 50
 shot 01-home
@@ -61,6 +63,11 @@ adb shell 'ls -la "/sdcard/Music/EFK Music/"' > "$OUT/music-dir.txt" 2>&1
 adb logcat -d > "$OUT/logcat-full.txt"
 echo "===== Müzik klasörü ====="
 cat "$OUT/music-dir.txt"
+adb logcat -b crash -d > "$OUT/crash.txt" 2>&1
+echo "===== Çökme kayıtları ====="
+head -120 "$OUT/crash.txt"
+echo "===== Uygulama süreçleri ====="
+grep -E "ActivityManager.*(com\.efkstudio|Killing|died)|Process com\.efkstudio|libc +: Fatal|AwBrowserTerminator|lowmemorykiller" "$OUT/logcat-full.txt" | grep -v "avc:" | cut -c1-400 | tail -40
 echo "===== Önemli log satırları ====="
-grep -E "EFK_STATE|AndroidRuntime|FATAL|W EFK|EFK *:" "$OUT/logcat-full.txt" | grep -v "avc:" | cut -c1-2500 | tail -80
+grep -E "EFK_STATE|AndroidRuntime|FATAL| EFK *:" "$OUT/logcat-full.txt" | grep -v "avc:" | cut -c1-2500 | tail -80
 exit 0

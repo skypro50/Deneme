@@ -199,6 +199,7 @@ object DownloadQueue {
         job.note = ""
         emit()
         service.updateNotification(job)
+        Log.i("EFK", "İndirme başlıyor: ${job.url}")
 
         val work = File(service.cacheDir, "dl/${job.id}")
         try {
@@ -218,10 +219,12 @@ object DownloadQueue {
                 ?: throw IllegalStateException("MP3 dosyası oluşturulamadı")
             val cover = files.firstOrNull { it.extension.lowercase() in setOf("jpg", "jpeg") }
             val meta = readMeta(File(work, "meta.json"))
+            Log.i("EFK", "yt-dlp bitti: mp3=${mp3.length()} bayt, kapak=${cover?.name}, meta=$meta")
             job.status = "converting"
             job.note = "Müzik klasörüne kaydediliyor…"
             emit()
             val track = Library.import(mp3, cover, meta, job)
+            Log.i("EFK", "Kitaplığa eklendi: ${track.id} -> ${track.uri}")
             job.videoId = track.id
             job.title = track.title
             job.artist = track.artist

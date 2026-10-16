@@ -15,6 +15,8 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.view.ViewGroup
+import android.util.Log
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -161,6 +163,14 @@ class MainActivity : ComponentActivity() {
                 return true
             }
 
+            // WebView çizim süreci çökerse uygulamayı düşürmek yerine sayfayı yeniden kur.
+            override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {
+                Log.w("EFK", "WebView çizim süreci kapandı (crash=${detail.didCrash()}), yeniden kuruluyor")
+                pageReady = false
+                recreate()
+                return true
+            }
+
             override fun onPageFinished(view: WebView, url: String) {
                 pageReady = true
                 pushInsets()
@@ -202,6 +212,7 @@ class MainActivity : ComponentActivity() {
         }
         if (intent.action == Intent.ACTION_SEND) {
             val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return
+            Log.i("EFK", "Paylaşım alındı: $text")
             val url = YouTube.extractUrl(text)
             if (url == null) {
                 Events.toast("Paylaşılan metinde bağlantı bulunamadı")
