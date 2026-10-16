@@ -28,6 +28,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
+import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -314,6 +315,15 @@ class MainActivity : ComponentActivity() {
         val c = controller ?: return JSONObject().put("id", "").put("queue", org.json.JSONArray())
         val queue = org.json.JSONArray()
         for (i in 0 until c.mediaItemCount) queue.put(c.getMediaItemAt(i).mediaId)
+        val order = org.json.JSONArray()
+        val timeline = c.currentTimeline
+        if (!timeline.isEmpty) {
+            var i = timeline.getFirstWindowIndex(c.shuffleModeEnabled)
+            while (i != C.INDEX_UNSET && order.length() < timeline.windowCount) {
+                order.put(i)
+                i = timeline.getNextWindowIndex(i, Player.REPEAT_MODE_OFF, c.shuffleModeEnabled)
+            }
+        }
         return JSONObject()
             .put("id", c.currentMediaItem?.mediaId ?: "")
             .put("playing", c.isPlaying)
@@ -325,6 +335,7 @@ class MainActivity : ComponentActivity() {
             .put("repeat", c.repeatMode)
             .put("index", c.currentMediaItemIndex)
             .put("queue", queue)
+            .put("order", order)
     }
 
     /** WebBridge'in herhangi bir iş parçacığından okuyabileceği son oynatıcı durumu. */

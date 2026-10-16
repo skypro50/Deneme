@@ -55,6 +55,8 @@ android {
         // nativeLibraryDir içinden çalıştırır; bu yüzden çıkarılmış olmalılar.
         jniLibs {
             useLegacyPackaging = true
+            // Telefonlar ARM işlemci kullanır; x86 kütüphaneleri APK'yı boşuna büyütür.
+            excludes += setOf("lib/x86/**", "lib/x86_64/**")
         }
     }
 

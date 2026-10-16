@@ -6,10 +6,12 @@ import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 
 /**
  * yt-dlp (youtubedl-android) sarmalayıcısı. YouTube'dan arama, liste çözme ve
@@ -56,6 +58,20 @@ object Engine {
     }
 
     suspend fun awaitReady(): Boolean = readySignal.await()
+
+    /** Motor hazır olana ve (varsa) süren güncelleme bitene kadar bekler. */
+    suspend fun awaitIdle(): Boolean {
+        if (!awaitReady()) return false
+        var waited = 0
+        while (updating && waited < 90_000) {
+            delay(500)
+            waited += 500
+        }
+        return true
+    }
+
+    /** YouTube oynatıcı betiklerini önbelleğe alarak sonraki indirmeleri hızlandırır. */
+    fun cacheDir(): String = File(app.cacheDir, "yt-dlp-cache").absolutePath
 
     fun stateJson(): JSONObject = JSONObject()
         .put("ready", ready)
@@ -111,8 +127,9 @@ object Engine {
 
     /** YouTube'da arama yapar; sonuçlar hafif (düz) liste olarak gelir. */
     suspend fun search(query: String, limit: Int = 25): JSONArray = withContext(Dispatchers.IO) {
-        if (!awaitReady()) throw IllegalStateException(initError ?: "İndirme motoru hazır değil")
+        if (!awaitIdle()) throw IllegalStateException(initError ?: "İndirme motoru hazır değil")
         val request = YoutubeDLRequest("ytsearch$limit:$query")
+            .addOption("--cache-dir", cacheDir())
             .addOption("--flat-playlist")
             .addOption("-J")
             .addOption("--no-warnings")
@@ -122,8 +139,9 @@ object Engine {
 
     /** Oynatma listesi / albüm bağlantısındaki şarkıları çıkarır. */
     suspend fun resolvePlaylist(url: String): Pair<String, JSONArray> = withContext(Dispatchers.IO) {
-        if (!awaitReady()) throw IllegalStateException(initError ?: "İndirme motoru hazır değil")
+        if (!awaitIdle()) throw IllegalStateException(initError ?: "İndirme motoru hazır değil")
         val request = YoutubeDLRequest(url)
+            .addOption("--cache-dir", cacheDir())
             .addOption("--flat-playlist")
             .addOption("--yes-playlist")
             .addOption("-J")
@@ -170,8 +188,7 @@ object YouTube {
     /** "youtube.com/playlist?list=..." veya YouTube Music albüm sayfası mı? */
     fun isPlaylistUrl(url: String): Boolean {
         if (videoIdFrom(url) != null) return false
-        return url.contains("list=") || url.contains("/browse/") || url.contains("/channel/") ||
-            url.contains("/@")
+        return url.contains("list=") || url.contains("/browse/")
     }
 
     /** Paylaşılan metnin içinden ilk bağlantıyı çıkarır. */

@@ -175,7 +175,11 @@ object DownloadQueue {
             job.note = "İndirme motoru hazırlanıyor…"
             emit()
         }
-        if (!Engine.awaitReady()) {
+        if (Engine.updating) {
+            job.note = "Motor güncelleniyor, birazdan başlayacak…"
+            emit()
+        }
+        if (!Engine.awaitIdle()) {
             fail(job, "İndirme motoru başlatılamadı: " + (Engine.initError ?: ""))
             return
         }
@@ -237,6 +241,7 @@ object DownloadQueue {
             .addOption("--no-playlist")
             .addOption("--newline")
             .addOption("--no-mtime")
+            .addOption("--cache-dir", Engine.cacheDir())
             .addOption("-f", "bestaudio/best")
             .addOption("-x")
             .addOption("--audio-format", "mp3")
